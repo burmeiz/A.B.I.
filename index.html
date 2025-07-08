@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fichamento Tracker</title>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <h1>🎓 Meu Diário de Estudo</h1>
+  <div id="login"></div>
+  <div id="app" style="display:none;">
+    <textarea id="notes" rows="6" cols="50" placeholder="Escreva suas anotações aqui..."></textarea><br>
+    <input type="text" id="gradeInput" placeholder="Nota (ex: Biologia - 8.5)" />
+    <button onclick="save()">Salvar</button>
+    <h3>Suas notas</h3>
+    <ul id="gradesList"></ul>
+  </div>
+
+  <script>
+    // 🔐 Your Firebase config here:
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const loginDiv = document.getElementById("login");
+    const appDiv = document.getElementById("app");
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        loginDiv.innerHTML = `Olá, ${user.displayName} <button onclick="auth.signOut()">Sair</button>`;
+        appDiv.style.display = 'block';
+        loadData(user.uid);
+      } else {
+        loginDiv.innerHTML = `<button onclick="auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())">Entrar com Google</button>`;
+        appDiv.style.display = 'none';
+      }
+    });
+
+    function save() {
+      const uid = auth.currentUser.uid;
+      const note = document.getElementById("notes").value;
+      const grade = document.getElementById("gradeInput").value;
+
+      db.collection("users").doc(uid).set({
+        notes: note
+      });
+
+      if (grade) {
+        db.collection("users").doc(uid).collection("grades").add({
+          grade,
+          timestamp: new Date()
+        });
+        document.getElementById("gradeInput").value = "";
+        loadData(uid);
+      }
+    }
+
+    function loadData(uid) {
+      db.collection("users").doc(uid).get().then(doc => {
+        if (doc.exists) {
+          document.getElementById("notes").value = doc.data().notes || "";
+        }
+      });
+
+      db.collection("users").doc(uid).collection("grades").orderBy("timestamp", "desc").get().then(snapshot => {
+        const list = document.getElementById("gradesList");
+        list.innerHTML = "";
+        snapshot.forEach(doc => {
+          const li = document.createElement("li");
+          li.textContent = doc.data().grade;
+          list.appendChild(li);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
