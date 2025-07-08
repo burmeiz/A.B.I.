@@ -2,9 +2,6 @@
 <html>
 <head>
   <title>Fichamento Tracker</title>
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
   <h1>🎓 Meu Diário de Estudo</h1>
@@ -18,70 +15,96 @@
   </div>
 
   <script>
-    // 🔐 Your Firebase config here:
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    const loginDiv = document.getElementById("login");
-    const appDiv = document.getElementById("app");
-
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        loginDiv.innerHTML = `Olá, ${user.displayName} <button onclick="auth.signOut()">Sair</button>`;
-        appDiv.style.display = 'block';
-        loadData(user.uid);
-      } else {
-        loginDiv.innerHTML = `<button onclick="auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())">Entrar com Google</button>`;
-        appDiv.style.display = 'none';
-      }
-    });
-
-    function save() {
-      const uid = auth.currentUser.uid;
-      const note = document.getElementById("notes").value;
-      const grade = document.getElementById("gradeInput").value;
-
-      db.collection("users").doc(uid).set({
-        notes: note
+    function loadScript(url) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = url;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error(`Failed to load script ${url}`));
+        document.head.appendChild(script);
       });
-
-      if (grade) {
-        db.collection("users").doc(uid).collection("grades").add({
-          grade,
-          timestamp: new Date()
-        });
-        document.getElementById("gradeInput").value = "";
-        loadData(uid);
-      }
     }
 
-    function loadData(uid) {
-      db.collection("users").doc(uid).get().then(doc => {
-        if (doc.exists) {
-          document.getElementById("notes").value = doc.data().notes || "";
+    (async function() {
+      try {
+        await loadScript('https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js');
+        await loadScript('https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js');
+        await loadScript('https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore-compat.js');
+
+        console.log('Firebase scripts loaded, firebase:', typeof firebase);
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyAR-WZNMiiF5c1u9UoObTGrs_iP5xnw5EU",
+          authDomain: "arquivo-interdisciplinar.firebaseapp.com",
+          projectId: "arquivo-interdisciplinar",
+          storageBucket: "arquivo-interdisciplinar.appspot.com",
+          messagingSenderId: "118743177993",
+          appId: "1:118743177993:web:a6979d8aef0d27826c11d8",
+          measurementId: "G-NES70LQ2RX"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        const loginDiv = document.getElementById("login");
+        const appDiv = document.getElementById("app");
+
+        auth.onAuthStateChanged(user => {
+          if (user) {
+            loginDiv.innerHTML = `Olá, ${user.displayName} <button onclick="auth.signOut()">Sair</button>`;
+            appDiv.style.display = 'block';
+            loadData(user.uid);
+          } else {
+            loginDiv.innerHTML = `<button onclick="auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())">Entrar com Google</button>`;
+            appDiv.style.display = 'none';
+          }
+        });
+
+        function save() {
+          const uid = auth.currentUser.uid;
+          const note = document.getElementById("notes").value;
+          const grade = document.getElementById("gradeInput").value;
+
+          db.collection("users").doc(uid).set({
+            notes: note
+          });
+
+          if (grade) {
+            db.collection("users").doc(uid).collection("grades").add({
+              grade,
+              timestamp: new Date()
+            });
+            document.getElementById("gradeInput").value = "";
+            loadData(uid);
+          }
         }
-      });
 
-      db.collection("users").doc(uid).collection("grades").orderBy("timestamp", "desc").get().then(snapshot => {
-        const list = document.getElementById("gradesList");
-        list.innerHTML = "";
-        snapshot.forEach(doc => {
-          const li = document.createElement("li");
-          li.textContent = doc.data().grade;
-          list.appendChild(li);
-        });
-      });
-    }
+        function loadData(uid) {
+          db.collection("users").doc(uid).get().then(doc => {
+            if (doc.exists) {
+              document.getElementById("notes").value = doc.data().notes || "";
+            }
+          });
+
+          db.collection("users").doc(uid).collection("grades").orderBy("timestamp", "desc").get().then(snapshot => {
+            const list = document.getElementById("gradesList");
+            list.innerHTML = "";
+            snapshot.forEach(doc => {
+              const li = document.createElement("li");
+              li.textContent = doc.data().grade;
+              list.appendChild(li);
+            });
+          });
+        }
+
+        window.save = save; // expose save for onclick button
+
+      } catch (error) {
+        console.error("Error loading Firebase scripts:", error);
+        document.getElementById("login").innerText = "Erro ao carregar Firebase. Tente novamente.";
+      }
+    })();
   </script>
 </body>
 </html>
