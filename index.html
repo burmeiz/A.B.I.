@@ -1,24 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Fichamento Tracker</title>
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore-compat.js"></script>
-</head>
-<body>
-  <h1>🎓 Meu Diário de Estudo</h1>
-  <div id="login"></div>
-  <div id="app" style="display:none;">
-    <textarea id="notes" rows="6" cols="50" placeholder="Escreva suas anotações aqui..."></textarea><br>
-    <input type="text" id="gradeInput" placeholder="Nota (ex: Biologia - 8.5)" />
-    <button onclick="save()">Salvar</button>
-    <h3>Suas notas</h3>
-    <ul id="gradesList"></ul>
-  </div>
-
-  <script>
-    console.log("Script loaded");
+<script>
+  window.onload = function() {
+    console.log("Firebase app script running after window load");
 
     const firebaseConfig = {
       apiKey: "AIzaSyAR-WZNMiiF5c1u9UoObTGrs_iP5xnw5EU",
@@ -84,6 +66,7 @@
         });
       });
     }
-  </script>
-</body>
-</html>
+
+    window.save = save;  // expose save to global scope so button onclick works
+  }
+</script>
