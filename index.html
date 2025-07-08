@@ -18,16 +18,17 @@
   </div>
 
   <script>
-    // 🔐 Your Firebase config here:
+    console.log("Script loaded");
+
     const firebaseConfig = {
-  apiKey: "AIzaSyAR-WZNMiiF5c1u9UoObTGrs_iP5xnw5EU",
-  authDomain: "arquivo-interdisciplinar.firebaseapp.com",
-  projectId: "arquivo-interdisciplinar",
-  storageBucket: "arquivo-interdisciplinar.appspot.com",
-  messagingSenderId: "118743177993",
-  appId: "1:118743177993:web:a6979d8aef0d27826c11d8",
-  measurementId: "G-NES70LQ2RX"
-};
+      apiKey: "AIzaSyAR-WZNMiiF5c1u9UoObTGrs_iP5xnw5EU",
+      authDomain: "arquivo-interdisciplinar.firebaseapp.com",
+      projectId: "arquivo-interdisciplinar",
+      storageBucket: "arquivo-interdisciplinar.appspot.com",
+      messagingSenderId: "118743177993",
+      appId: "1:118743177993:web:a6979d8aef0d27826c11d8",
+      measurementId: "G-NES70LQ2RX"
+    };
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
