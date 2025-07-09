@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>🎓 Meu Diário de Estudo</title>
+  <title>🎓 Meu Diário com Google Sheets</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Firebase -->
@@ -10,116 +10,51 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-  <!-- Fonte -->
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet" />
-
   <style>
     body {
-      font-family: 'Open Sans', sans-serif;
+      font-family: Arial, sans-serif;
       background-color: #0f172a;
-      color: #f1f5f9;
+      color: white;
       margin: 0;
       padding: 2rem;
-    }
-    h1 {
       text-align: center;
-      font-size: 2rem;
-      margin-bottom: 2rem;
     }
     #login {
-      text-align: center;
       margin-bottom: 2rem;
     }
     button {
       background: #00ffc8;
-      color: #0f172a;
-      font-weight: bold;
       border: none;
-      padding: 0.6rem 1.2rem;
+      padding: 0.7rem 1.5rem;
       border-radius: 8px;
+      font-weight: bold;
       cursor: pointer;
+      color: #0f172a;
       box-shadow: 0 2px 6px #00ffc880;
     }
-    textarea,
-    input {
+    iframe {
+      border: none;
       width: 100%;
-      max-width: 600px;
-      display: block;
-      margin: 1rem auto;
-      padding: 0.8rem;
-      background-color: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      color: #f1f5f9;
-    }
-    #app {
-      display: none;
-      max-width: 800px;
+      height: 700px;
+      max-width: 900px;
       margin: auto;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 1rem auto;
-      max-width: 600px;
-    }
-    li {
-      padding: 0.5rem;
-      border-bottom: 1px solid #334155;
-    }
-    .container {
-      margin-top: 3rem;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 1rem;
-    }
-    td,
-    th {
-      padding: 0.6rem;
-      border: 1px solid #334155;
-      text-align: center;
-      min-width: 80px;
-    }
-    th {
-      background-color: #1f2937;
-    }
-    h2 {
-      border-bottom: 2px solid #334155;
-      padding-bottom: 0.4rem;
-      margin-top: 2rem;
+      display: block;
+      border-radius: 10px;
+      box-shadow: 0 0 15px #00ffc8aa;
     }
   </style>
 </head>
 <body>
-  <h1>🎓 Meu Diário de Estudo</h1>
+
+  <h1>🎓 Meu Diário com Google Sheets</h1>
   <div id="login"></div>
 
-  <div id="app">
-    <textarea id="notes" rows="6" placeholder="Escreva suas anotações aqui..."></textarea>
-    <input type="text" id="gradeInput" placeholder="Nota (ex: Biologia - 8.5)" />
-    <button onclick="save()">Salvar</button>
-
-    <h2>Suas notas</h2>
-    <ul id="gradesList"></ul>
-
-    <div class="container">
-      <h2>🧾 Boletim Individual</h2>
-      <div id="dataTable">Carregando dados...</div>
-
-      <h2>📐 Escalas de avaliação</h2>
-      <ul>
-        <li>🔢 0–15: Nota oficial do Abitur</li>
-        <li>🔟 0–10: Escala para GPA</li>
-        <li>📈 %: Desempenho percentual</li>
-        <li>🗣️ Descrição: Interpretação qualitativa</li>
-      </ul>
-    </div>
+  <div id="sheetContainer" style="display:none;">
+    <h2>Sua Planilha Pessoal</h2>
+    <iframe id="sheetFrame" src=""></iframe>
   </div>
 
   <script>
-    // Configuração Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyAR-WZNMiiF5c1u9UoObTGrs_iP5xnw5EU",
       authDomain: "arquivo-interdisciplinar.firebaseapp.com",
@@ -134,125 +69,29 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const loginDiv = document.getElementById("login");
-    const appDiv = document.getElementById("app");
+    const loginDiv = document.getElementById('login');
+    const sheetContainer = document.getElementById('sheetContainer');
+    const sheetFrame = document.getElementById('sheetFrame');
 
-    auth.onAuthStateChanged(user => {
+    auth.onAuthStateChanged(async user => {
       if (user) {
         loginDiv.innerHTML = `Olá, ${user.displayName} <button onclick="auth.signOut()">Sair</button>`;
-        appDiv.style.display = "block";
-        loadData(user.uid);
-        loadStudentData(user.uid);
+        // Pega ID da planilha do Firestore
+        const doc = await db.collection('users').doc(user.uid).get();
+        if (doc.exists && doc.data().sheetId) {
+          const sheetId = doc.data().sheetId;
+          // URL pública para embedar o sheet
+          sheetFrame.src = `https://docs.google.com/spreadsheets/d/${sheetId}/edit?usp=sharing&rm=embedded`;
+          sheetContainer.style.display = 'block';
+        } else {
+          sheetContainer.innerHTML = '<p>Você ainda não tem uma planilha configurada.</p>';
+          sheetContainer.style.display = 'block';
+        }
       } else {
         loginDiv.innerHTML = `<button onclick="auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())">Entrar com Google</button>`;
-        appDiv.style.display = "none";
+        sheetContainer.style.display = 'none';
       }
     });
-
-    function save() {
-      const uid = auth.currentUser.uid;
-      const note = document.getElementById("notes").value;
-      const grade = document.getElementById("gradeInput").value;
-
-      db.collection("users").doc(uid).set({ notes: note });
-
-      if (grade) {
-        db.collection("users").doc(uid).collection("grades").add({
-          grade,
-          timestamp: new Date()
-        });
-        document.getElementById("gradeInput").value = "";
-        loadData(uid);
-      }
-    }
-
-    function loadData(uid) {
-      db.collection("users")
-        .doc(uid)
-        .get()
-        .then(doc => {
-          if (doc.exists) {
-            document.getElementById("notes").value = doc.data().notes || "";
-          }
-        });
-
-      db.collection("users")
-        .doc(uid)
-        .collection("grades")
-        .orderBy("timestamp", "desc")
-        .get()
-        .then(snapshot => {
-          const list = document.getElementById("gradesList");
-          list.innerHTML = "";
-          snapshot.forEach(doc => {
-            const li = document.createElement("li");
-            li.textContent = doc.data().grade;
-            list.appendChild(li);
-          });
-        });
-    }
-
-    async function loadStudentData(uid) {
-      const wrapper = document.getElementById("dataTable");
-      wrapper.innerHTML = "Carregando...";
-
-      const docRef = db.collection("users").doc(uid).collection("gradesheet").doc("table");
-      const doc = await docRef.get();
-
-      let rows = doc.exists
-        ? doc.data().rows
-        : [["Disciplina", "Nota (15)", "Nota (%)", "Nota (0-10)", "Descrição"]];
-
-      const table = document.createElement("table");
-      const tbody = document.createElement("tbody");
-
-      rows.forEach((row, rowIndex) => {
-        const tr = document.createElement("tr");
-
-        row.forEach((cell, colIndex) => {
-          const tag = rowIndex === 0 ? "th" : "td";
-          const el = document.createElement(tag);
-
-          el.contentEditable = rowIndex !== 0;
-          el.innerText = cell ?? "";
-          el.dataset.row = rowIndex;
-          el.dataset.col = colIndex;
-
-          el.addEventListener("blur", () => {
-            const r = parseInt(el.dataset.row);
-            const c = parseInt(el.dataset.col);
-            rows[r][c] = el.innerText;
-            saveTable(uid, rows);
-          });
-
-          tr.appendChild(el);
-        });
-
-        tbody.appendChild(tr);
-      });
-
-      table.appendChild(tbody);
-      wrapper.innerHTML = "";
-
-      const addButton = document.createElement("button");
-      addButton.innerText = "➕ Adicionar linha";
-      addButton.style.marginTop = "1rem";
-      addButton.onclick = () => {
-        const newRow = Array(rows[0].length).fill("");
-        rows.push(newRow);
-        saveTable(uid, rows);
-        loadStudentData(uid); // recarrega a tabela
-      };
-
-      wrapper.appendChild(table);
-      wrapper.appendChild(addButton);
-    }
-
-    async function saveTable(uid, rows) {
-      const docRef = db.collection("users").doc(uid).collection("gradesheet").doc("table");
-      await docRef.set({ rows });
-      console.log("Tabela salva!");
-    }
   </script>
 </body>
 </html>
