@@ -5,7 +5,7 @@
   <title>🎓 Abitur Student Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Firebase -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore-compat.js"></script>
@@ -47,6 +47,23 @@
       font-size: 1.2rem;
       color: #a1a1aa;
     }
+    #userArea {
+      margin: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    button {
+      background-color: #2563eb;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
   </style>
 </head>
 <body>
@@ -66,7 +83,7 @@
   </div>
 
   <script>
-    // Configuração Firebase (troque pelos seus dados)
+    // Config Firebase (coloque os seus dados aqui)
     const firebaseConfig = {
       apiKey: "AIzaSyAR-WZNMiiF5c1u9UoObTGrs_iP5xnw5EU",
       authDomain: "arquivo-interdisciplinar.firebaseapp.com",
@@ -80,69 +97,67 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
-    window.onload = () => {
-      const loginBtn = document.getElementById('loginBtn');
-      const logoutBtn = document.getElementById('logoutBtn');
-      const loginDiv = document.getElementById('login');
-      const userArea = document.getElementById('userArea');
-      const userNameSpan = document.getElementById('userName');
-      const iframeContainer = document.getElementById('iframeContainer');
-      const sheetFrame = document.getElementById('sheetFrame');
-      const loadingText = document.getElementById('loading');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const loginDiv = document.getElementById('login');
+    const userArea = document.getElementById('userArea');
+    const userNameSpan = document.getElementById('userName');
+    const iframeContainer = document.getElementById('iframeContainer');
+    const sheetFrame = document.getElementById('sheetFrame');
+    const loadingText = document.getElementById('loading');
 
-      loginBtn.addEventListener('click', () => {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).catch(error => {
-          alert('Erro ao entrar: ' + error.message);
-          console.error(error);
-        });
+    loginBtn.addEventListener('click', () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).catch(e => {
+        alert('Erro no login: ' + e.message);
+        console.error(e);
       });
+    });
 
-      logoutBtn.addEventListener('click', () => {
-        auth.signOut();
-      });
+    logoutBtn.addEventListener('click', () => {
+      auth.signOut();
+    });
 
-      auth.onAuthStateChanged(async user => {
-        if (user) {
-          loginDiv.style.display = 'none';
-          userArea.style.display = 'block';
-          userNameSpan.textContent = `Olá, ${user.displayName}`;
+    auth.onAuthStateChanged(async user => {
+      if (user) {
+        loginDiv.style.display = 'none';
+        userArea.style.display = 'flex';
+        userNameSpan.textContent = `Olá, ${user.displayName}`;
 
-          loadingText.style.display = 'block';
-          iframeContainer.style.display = 'none';
+        loadingText.style.display = 'block';
+        iframeContainer.style.display = 'none';
 
-          try {
-            // Substitua esta URL pela sua real API Vercel que cria/retorna a planilha
-            const response = await fetch('https://a-b-i.vercel.app/api/create-sheet', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ uid: user.uid, email: user.email })
-            });
+        try {
+          // Troque essa URL pela sua URL real da API no Vercel!
+          const response = await fetch('https://a-b-i.vercel.app/api/create-sheet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid: user.uid, email: user.email })
+          });
 
-            const data = await response.json();
+          const data = await response.json();
 
-            if (data.sheetId) {
-              sheetFrame.src = `https://docs.google.com/spreadsheets/d/${data.sheetId}/edit?usp=sharing&rm=embedded`;
-              iframeContainer.style.display = 'block';
-            } else {
-              alert('Erro ao carregar planilha');
-            }
-          } catch (err) {
-            alert('Erro ao conectar com a API');
-            console.error(err);
-          } finally {
-            loadingText.style.display = 'none';
+          if (data.sheetId) {
+            sheetFrame.src = `https://docs.google.com/spreadsheets/d/${data.sheetId}/edit?usp=sharing&rm=embedded`;
+            iframeContainer.style.display = 'block';
+          } else {
+            alert('Erro ao carregar planilha');
           }
-
-        } else {
-          loginDiv.style.display = 'block';
-          userArea.style.display = 'none';
-          iframeContainer.style.display = 'none';
+        } catch (err) {
+          alert('Erro ao conectar com a API');
+          console.error(err);
+        } finally {
           loadingText.style.display = 'none';
-          sheetFrame.src = '';
         }
-      });
-    };
+
+      } else {
+        loginDiv.style.display = 'block';
+        userArea.style.display = 'none';
+        iframeContainer.style.display = 'none';
+        loadingText.style.display = 'none';
+        sheetFrame.src = '';
+      }
+    });
   </script>
 </body>
 </html>
