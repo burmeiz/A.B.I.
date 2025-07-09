@@ -1,19 +1,20 @@
-const { google } = require('googleapis');
+const { google } = require('googleapis'); 
 const admin = require('firebase-admin');
-const path = require('path');
 
-const serviceAccountPath = path.join(__dirname, '../serviceAccountKey.json');
+// Lê a chave da variável de ambiente e faz parse do JSON
+const serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_JSON);
 
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert(serviceAccountPath),
+    credential: admin.credential.cert(serviceAccount),
   });
 }
 
 const firestore = admin.firestore();
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: serviceAccountPath,
+  // Usa a chave em memória, não arquivo físico
+  credentials: serviceAccount,
   scopes: ['https://www.googleapis.com/auth/drive'],
 });
 
