@@ -20,7 +20,7 @@ const drive = google.drive({ version: 'v3', auth });
 
 async function createSpreadsheetForUser(uid, userEmail) {
   const copyResponse = await drive.files.copy({
-    fileId: 'SEU_TEMPLATE_ID_AQUI',
+    fileId: 'https://docs.google.com/spreadsheets/d/1Mv88vQ25flGZ5qnru95ob-Lk4YzEgvbMSad_IB_XLgw/edit?usp=sharing',
     requestBody: {
       name: `Boletim - ${userEmail}`,
     },
