@@ -1,110 +1,97 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-  <title>Fichamento Tracker</title>
+  <meta charset="UTF-8" />
+  <title>🎓 Meu Diário com Google Sheets</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0f172a;
+      color: white;
+      margin: 0;
+      padding: 2rem;
+      text-align: center;
+    }
+    #login {
+      margin-bottom: 2rem;
+    }
+    button {
+      background: #00ffc8;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #0f172a;
+      box-shadow: 0 2px 6px #00ffc880;
+    }
+    iframe {
+      border: none;
+      width: 100%;
+      height: 700px;
+      max-width: 900px;
+      margin: auto;
+      display: block;
+      border-radius: 10px;
+      box-shadow: 0 0 15px #00ffc8aa;
+    }
+  </style>
 </head>
 <body>
-  <h1>🎓 Meu Diário de Estudo</h1>
+
+  <h1>🎓 Meu Diário com Google Sheets</h1>
   <div id="login"></div>
-  <div id="app" style="display:none;">
-    <textarea id="notes" rows="6" cols="50" placeholder="Escreva suas anotações aqui..."></textarea><br>
-    <input type="text" id="gradeInput" placeholder="Nota (ex: Biologia - 8.5)" />
-    <button onclick="save()">Salvar</button>
-    <h3>Suas notas</h3>
-    <ul id="gradesList"></ul>
+
+  <div id="sheetContainer" style="display:none;">
+    <h2>Sua Planilha Pessoal</h2>
+    <iframe id="sheetFrame" src=""></iframe>
   </div>
 
   <script>
-    function loadScript(url) {
-      return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = url;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error(`Failed to load script ${url}`));
-        document.head.appendChild(script);
-      });
-    }
+    const firebaseConfig = {
+      apiKey: "AIzaSyAR-WZNMiiF5c1u9UoObTGrs_iP5xnw5EU",
+      authDomain: "arquivo-interdisciplinar.firebaseapp.com",
+      projectId: "arquivo-interdisciplinar",
+      storageBucket: "arquivo-interdisciplinar.appspot.com",
+      messagingSenderId: "118743177993",
+      appId: "1:118743177993:web:a6979d8aef0d27826c11d8",
+      measurementId: "G-NES70LQ2RX"
+    };
 
-    (async function() {
-      try {
-        await loadScript('https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js');
-        await loadScript('https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js');
-        await loadScript('https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore-compat.js');
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-        console.log('Firebase scripts loaded, firebase:', typeof firebase);
+    const loginDiv = document.getElementById('login');
+    const sheetContainer = document.getElementById('sheetContainer');
+    const sheetFrame = document.getElementById('sheetFrame');
 
-        const firebaseConfig = {
-          apiKey: "AIzaSyAR-WZNMiiF5c1u9UoObTGrs_iP5xnw5EU",
-          authDomain: "arquivo-interdisciplinar.firebaseapp.com",
-          projectId: "arquivo-interdisciplinar",
-          storageBucket: "arquivo-interdisciplinar.appspot.com",
-          messagingSenderId: "118743177993",
-          appId: "1:118743177993:web:a6979d8aef0d27826c11d8",
-          measurementId: "G-NES70LQ2RX"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        const loginDiv = document.getElementById("login");
-        const appDiv = document.getElementById("app");
-
-        auth.onAuthStateChanged(user => {
-          if (user) {
-            loginDiv.innerHTML = `Olá, ${user.displayName} <button onclick="auth.signOut()">Sair</button>`;
-            appDiv.style.display = 'block';
-            loadData(user.uid);
-          } else {
-            loginDiv.innerHTML = `<button onclick="auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())">Entrar com Google</button>`;
-            appDiv.style.display = 'none';
-          }
-        });
-
-        function save() {
-          const uid = auth.currentUser.uid;
-          const note = document.getElementById("notes").value;
-          const grade = document.getElementById("gradeInput").value;
-
-          db.collection("users").doc(uid).set({
-            notes: note
-          });
-
-          if (grade) {
-            db.collection("users").doc(uid).collection("grades").add({
-              grade,
-              timestamp: new Date()
-            });
-            document.getElementById("gradeInput").value = "";
-            loadData(uid);
-          }
+    auth.onAuthStateChanged(async user => {
+      if (user) {
+        loginDiv.innerHTML = `Olá, ${user.displayName} <button onclick="auth.signOut()">Sair</button>`;
+        // Pega ID da planilha do Firestore
+        const doc = await db.collection('users').doc(user.uid).get();
+        if (doc.exists && doc.data().sheetId) {
+          const sheetId = doc.data().sheetId;
+          // URL pública para embedar o sheet
+          sheetFrame.src = `https://docs.google.com/spreadsheets/d/${sheetId}/edit?usp=sharing&rm=embedded`;
+          sheetContainer.style.display = 'block';
+        } else {
+          sheetContainer.innerHTML = '<p>Você ainda não tem uma planilha configurada.</p>';
+          sheetContainer.style.display = 'block';
         }
-
-        function loadData(uid) {
-          db.collection("users").doc(uid).get().then(doc => {
-            if (doc.exists) {
-              document.getElementById("notes").value = doc.data().notes || "";
-            }
-          });
-
-          db.collection("users").doc(uid).collection("grades").orderBy("timestamp", "desc").get().then(snapshot => {
-            const list = document.getElementById("gradesList");
-            list.innerHTML = "";
-            snapshot.forEach(doc => {
-              const li = document.createElement("li");
-              li.textContent = doc.data().grade;
-              list.appendChild(li);
-            });
-          });
-        }
-
-        window.save = save; // expose save for onclick button
-
-      } catch (error) {
-        console.error("Error loading Firebase scripts:", error);
-        document.getElementById("login").innerText = "Erro ao carregar Firebase. Tente novamente.";
+      } else {
+        loginDiv.innerHTML = `<button onclick="auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())">Entrar com Google</button>`;
+        sheetContainer.style.display = 'none';
       }
-    })();
+    });
   </script>
 </body>
 </html>
