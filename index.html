@@ -61,13 +61,29 @@
     }
   </style>
 
-  <!-- Firebase SDKs com defer -->
-  <script defer src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore-compat.js"></script>
+  <!-- Firebase SDKs versão 9.23.0 compat -->
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
 
-  <!-- Seu script principal com defer -->
-  <script defer>
+  <div id="login">
+    <button id="loginBtn">Entrar com Google</button>
+  </div>
+
+  <div id="userArea" style="display:none;">
+    <span id="userName"></span>
+    <button id="logoutBtn">Sair</button>
+  </div>
+
+  <div id="loading" style="display:none;">Carregando planilha...</div>
+
+  <div id="iframeContainer" style="display:none;">
+    <iframe id="sheetFrame" src=""></iframe>
+  </div>
+
+  <script>
     document.addEventListener('DOMContentLoaded', () => {
       const firebaseConfig = {
         apiKey: "AIzaSyAR-WZNMiiF5c1u9UoObTGrs_iP5xnw5EU",
@@ -132,7 +148,6 @@
           } finally {
             loadingText.style.display = 'none';
           }
-
         } else {
           loginDiv.style.display = 'block';
           userArea.style.display = 'none';
@@ -144,21 +159,5 @@
     });
   </script>
 
-</head>
-<body>
-  <div id="login">
-    <button id="loginBtn">Entrar com Google</button>
-  </div>
-
-  <div id="userArea" style="display:none;">
-    <span id="userName"></span>
-    <button id="logoutBtn">Sair</button>
-  </div>
-
-  <div id="loading" style="display:none;">Carregando planilha...</div>
-
-  <div id="iframeContainer" style="display:none;">
-    <iframe id="sheetFrame" src=""></iframe>
-  </div>
 </body>
 </html>
