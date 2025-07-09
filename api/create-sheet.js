@@ -1,26 +1,31 @@
 const { google } = require('googleapis');
 const admin = require('firebase-admin');
+const path = require('path');
 
-const serviceAccount = require('../serviceAccountKey.json'); // Ajuste o caminho se necessário
+const serviceAccountPath = path.join(__dirname, '../serviceAccountKey.json');
 
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+    credential: admin.credential.cert(serviceAccountPath),
   });
 }
 
 const firestore = admin.firestore();
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: './serviceAccountKey.json',
+  keyFile: serviceAccountPath,
   scopes: ['https://www.googleapis.com/auth/drive'],
 });
 
 const drive = google.drive({ version: 'v3', auth });
 
 async function createSpreadsheetForUser(uid, userEmail) {
+  // Coloque aqui só o ID da planilha original (sem URL)
+  const TEMPLATE_SHEET_ID = '1Mv88vQ25flGZ5qnru95ob-Lk4YzEgvbMSad_IB_XLgw';
+
+  // Faz uma cópia da planilha modelo para o usuário
   const copyResponse = await drive.files.copy({
-    fileId: 'https://docs.google.com/spreadsheets/d/1Mv88vQ25flGZ5qnru95ob-Lk4YzEgvbMSad_IB_XLgw/edit?usp=sharing',
+    fileId: TEMPLATE_SHEET_ID,
     requestBody: {
       name: `Boletim - ${userEmail}`,
     },
@@ -28,6 +33,7 @@ async function createSpreadsheetForUser(uid, userEmail) {
 
   const newFileId = copyResponse.data.id;
 
+  // Salva o ID da planilha no Firestore para o usuário
   await firestore.collection('users').doc(uid).set({ sheetId: newFileId }, { merge: true });
 
   return newFileId;
@@ -47,9 +53,11 @@ module.exports = async function handler(req, res) {
   try {
     const userDoc = await firestore.collection('users').doc(uid).get();
     if (userDoc.exists && userDoc.data().sheetId) {
+      // Retorna a planilha já criada
       return res.json({ sheetId: userDoc.data().sheetId });
     }
 
+    // Cria nova planilha
     const sheetId = await createSpreadsheetForUser(uid, email);
     res.json({ sheetId });
   } catch (error) {
