@@ -2,188 +2,124 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fichamento Tracker</title>
-  
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-  
+  <title>🎓 Meu Diário de Estudo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  
+
+  <!-- Fonte -->
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet" />
+
   <style>
-    /* Reset & base */
-    * {
-      box-sizing: border-box;
-    }
     body {
+      font-family: 'Open Sans', sans-serif;
+      background-color: #0f172a;
+      color: #f1f5f9;
       margin: 0;
-      background: linear-gradient(135deg, #121212 0%, #1f1f1f 100%);
-      font-family: 'Inter', sans-serif;
-      color: white;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       padding: 2rem;
-      transition: background 0.5s ease;
     }
-    
     h1 {
-      font-weight: 700;
-      font-size: 2.8rem;
-      margin-bottom: 1rem;
-      letter-spacing: 0.04em;
-      text-shadow: 0 0 8px #00ffeaaa;
-    }
-    
-    #login {
+      text-align: center;
+      font-size: 2rem;
       margin-bottom: 2rem;
     }
-    
+    #login {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
     button {
       background: #00ffc8;
+      color: #0f172a;
+      font-weight: bold;
       border: none;
-      padding: 0.6rem 1.4rem;
-      border-radius: 24px;
-      font-weight: 600;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
       cursor: pointer;
-      color: #050505;
-      box-shadow: 0 4px 8px #00ffc888;
-      transition: all 0.3s ease;
-      user-select: none;
+      box-shadow: 0 2px 6px #00ffc880;
     }
-    
-    button:hover {
-      background: #00e6b8;
-      box-shadow: 0 6px 12px #00e6b888;
-      transform: translateY(-2px);
-    }
-    
-    button:active {
-      transform: translateY(0);
-      box-shadow: 0 3px 6px #00c9a888;
-    }
-    
-    #app {
+    textarea,
+    input {
       width: 100%;
       max-width: 600px;
-      background: #222;
-      border-radius: 16px;
-      padding: 2rem;
-      box-shadow: 0 0 20px #00ffc8aa;
-      backdrop-filter: blur(12px);
-      animation: fadeIn 1s ease forwards;
+      display: block;
+      margin: 1rem auto;
+      padding: 0.8rem;
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #f1f5f9;
     }
-    
-    textarea#notes {
-      width: 100%;
-      resize: vertical;
-      min-height: 120px;
-      background: #111;
-      border: none;
-      border-radius: 12px;
-      padding: 1rem;
-      color: white;
-      font-size: 1rem;
-      box-shadow: inset 0 0 6px #00ffc8aa;
-      transition: box-shadow 0.3s ease;
-      font-family: 'Inter', sans-serif;
+    #app {
+      display: none;
+      max-width: 800px;
+      margin: auto;
     }
-    textarea#notes:focus {
-      outline: none;
-      box-shadow: inset 0 0 10px #00fff0ff;
-    }
-    
-    input#gradeInput {
-      width: calc(100% - 100px);
-      padding: 0.8rem 1rem;
-      border-radius: 12px;
-      border: none;
-      background: #111;
-      color: white;
-      font-size: 1rem;
-      box-shadow: inset 0 0 6px #00ffc8aa;
-      font-family: 'Inter', sans-serif;
-      transition: box-shadow 0.3s ease;
-    }
-    input#gradeInput:focus {
-      outline: none;
-      box-shadow: inset 0 0 10px #00fff0ff;
-    }
-    
-    #saveContainer {
-      margin-top: 1rem;
-      display: flex;
-      justify-content: flex-end;
-    }
-    
-    h3 {
-      margin-top: 2rem;
-      font-weight: 600;
-      border-bottom: 2px solid #00ffc8;
-      padding-bottom: 0.3rem;
-      letter-spacing: 0.02em;
-    }
-    
-    ul#gradesList {
-      margin-top: 0.8rem;
+    ul {
       list-style: none;
-      padding-left: 0;
-      max-height: 180px;
-      overflow-y: auto;
-      border-radius: 12px;
-      background: #111;
-      box-shadow: inset 0 0 6px #00ffc8aa;
+      padding: 0;
+      margin: 1rem auto;
+      max-width: 600px;
     }
-    
-    ul#gradesList li {
-      padding: 0.6rem 1rem;
-      border-bottom: 1px solid #00ffc855;
-      font-weight: 500;
-      cursor: default;
-      user-select: none;
-      transition: background 0.25s ease;
+    li {
+      padding: 0.5rem;
+      border-bottom: 1px solid #334155;
     }
-    ul#gradesList li:hover {
-      background: #00ffc822;
+    .container {
+      margin-top: 3rem;
     }
-    
-    @keyframes fadeIn {
-      from {opacity: 0; transform: translateY(10px);}
-      to {opacity: 1; transform: translateY(0);}
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 1rem;
     }
-    
-    /* Responsive */
-    @media (max-width: 640px) {
-      #app {
-        padding: 1rem;
-      }
-      input#gradeInput {
-        width: 100%;
-        margin-bottom: 0.8rem;
-      }
-      #saveContainer {
-        justify-content: center;
-      }
+    td,
+    th {
+      padding: 0.6rem;
+      border: 1px solid #334155;
+      text-align: center;
+      min-width: 80px;
+    }
+    th {
+      background-color: #1f2937;
+    }
+    h2 {
+      border-bottom: 2px solid #334155;
+      padding-bottom: 0.4rem;
+      margin-top: 2rem;
     }
   </style>
 </head>
 <body>
   <h1>🎓 Meu Diário de Estudo</h1>
   <div id="login"></div>
-  <div id="app" style="display:none;">
-    <textarea id="notes" placeholder="Escreva suas anotações aqui..."></textarea>
-    <div id="saveContainer">
-      <input type="text" id="gradeInput" placeholder="Nota (ex: Biologia - 8.5)" />
-      <button onclick="save()">Salvar</button>
-    </div>
-    <h3>Suas notas</h3>
+
+  <div id="app">
+    <textarea id="notes" rows="6" placeholder="Escreva suas anotações aqui..."></textarea>
+    <input type="text" id="gradeInput" placeholder="Nota (ex: Biologia - 8.5)" />
+    <button onclick="save()">Salvar</button>
+
+    <h2>Suas notas</h2>
     <ul id="gradesList"></ul>
+
+    <div class="container">
+      <h2>🧾 Boletim Individual</h2>
+      <div id="dataTable">Carregando dados...</div>
+
+      <h2>📐 Escalas de avaliação</h2>
+      <ul>
+        <li>🔢 0–15: Nota oficial do Abitur</li>
+        <li>🔟 0–10: Escala para GPA</li>
+        <li>📈 %: Desempenho percentual</li>
+        <li>🗣️ Descrição: Interpretação qualitativa</li>
+      </ul>
+    </div>
   </div>
 
   <script>
+    // Configuração Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyAR-WZNMiiF5c1u9UoObTGrs_iP5xnw5EU",
       authDomain: "arquivo-interdisciplinar.firebaseapp.com",
@@ -193,6 +129,7 @@
       appId: "1:118743177993:web:a6979d8aef0d27826c11d8",
       measurementId: "G-NES70LQ2RX"
     };
+
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
@@ -203,11 +140,12 @@
     auth.onAuthStateChanged(user => {
       if (user) {
         loginDiv.innerHTML = `Olá, ${user.displayName} <button onclick="auth.signOut()">Sair</button>`;
-        appDiv.style.display = 'block';
+        appDiv.style.display = "block";
         loadData(user.uid);
+        loadStudentData(user.uid);
       } else {
         loginDiv.innerHTML = `<button onclick="auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())">Entrar com Google</button>`;
-        appDiv.style.display = 'none';
+        appDiv.style.display = "none";
       }
     });
 
@@ -216,9 +154,7 @@
       const note = document.getElementById("notes").value;
       const grade = document.getElementById("gradeInput").value;
 
-      db.collection("users").doc(uid).set({
-        notes: note
-      });
+      db.collection("users").doc(uid).set({ notes: note });
 
       if (grade) {
         db.collection("users").doc(uid).collection("grades").add({
@@ -231,21 +167,91 @@
     }
 
     function loadData(uid) {
-      db.collection("users").doc(uid).get().then(doc => {
-        if (doc.exists) {
-          document.getElementById("notes").value = doc.data().notes || "";
-        }
+      db.collection("users")
+        .doc(uid)
+        .get()
+        .then(doc => {
+          if (doc.exists) {
+            document.getElementById("notes").value = doc.data().notes || "";
+          }
+        });
+
+      db.collection("users")
+        .doc(uid)
+        .collection("grades")
+        .orderBy("timestamp", "desc")
+        .get()
+        .then(snapshot => {
+          const list = document.getElementById("gradesList");
+          list.innerHTML = "";
+          snapshot.forEach(doc => {
+            const li = document.createElement("li");
+            li.textContent = doc.data().grade;
+            list.appendChild(li);
+          });
+        });
+    }
+
+    async function loadStudentData(uid) {
+      const wrapper = document.getElementById("dataTable");
+      wrapper.innerHTML = "Carregando...";
+
+      const docRef = db.collection("users").doc(uid).collection("gradesheet").doc("table");
+      const doc = await docRef.get();
+
+      let rows = doc.exists
+        ? doc.data().rows
+        : [["Disciplina", "Nota (15)", "Nota (%)", "Nota (0-10)", "Descrição"]];
+
+      const table = document.createElement("table");
+      const tbody = document.createElement("tbody");
+
+      rows.forEach((row, rowIndex) => {
+        const tr = document.createElement("tr");
+
+        row.forEach((cell, colIndex) => {
+          const tag = rowIndex === 0 ? "th" : "td";
+          const el = document.createElement(tag);
+
+          el.contentEditable = rowIndex !== 0;
+          el.innerText = cell ?? "";
+          el.dataset.row = rowIndex;
+          el.dataset.col = colIndex;
+
+          el.addEventListener("blur", () => {
+            const r = parseInt(el.dataset.row);
+            const c = parseInt(el.dataset.col);
+            rows[r][c] = el.innerText;
+            saveTable(uid, rows);
+          });
+
+          tr.appendChild(el);
+        });
+
+        tbody.appendChild(tr);
       });
 
-      db.collection("users").doc(uid).collection("grades").orderBy("timestamp", "desc").get().then(snapshot => {
-        const list = document.getElementById("gradesList");
-        list.innerHTML = "";
-        snapshot.forEach(doc => {
-          const li = document.createElement("li");
-          li.textContent = doc.data().grade;
-          list.appendChild(li);
-        });
-      });
+      table.appendChild(tbody);
+      wrapper.innerHTML = "";
+
+      const addButton = document.createElement("button");
+      addButton.innerText = "➕ Adicionar linha";
+      addButton.style.marginTop = "1rem";
+      addButton.onclick = () => {
+        const newRow = Array(rows[0].length).fill("");
+        rows.push(newRow);
+        saveTable(uid, rows);
+        loadStudentData(uid); // recarrega a tabela
+      };
+
+      wrapper.appendChild(table);
+      wrapper.appendChild(addButton);
+    }
+
+    async function saveTable(uid, rows) {
+      const docRef = db.collection("users").doc(uid).collection("gradesheet").doc("table");
+      await docRef.set({ rows });
+      console.log("Tabela salva!");
     }
   </script>
 </body>
