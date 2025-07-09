@@ -1,60 +1,72 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="bg-gray-900 text-white" style="background:#0f172a; font-family: 'Open Sans', sans-serif;">
 <head>
   <meta charset="UTF-8" />
-  <title>🎓 Meu Diário com Google Sheets</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎓 Abitur Student Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore-compat.js"></script>
 
   <style>
     body {
-      font-family: Arial, sans-serif;
+      margin: 0; padding: 0;
       background-color: #0f172a;
       color: white;
-      margin: 0;
-      padding: 2rem;
-      text-align: center;
+      font-family: 'Open Sans', sans-serif;
     }
     #login {
-      margin-bottom: 2rem;
+      margin: 1rem;
     }
-    button {
-      background: #00ffc8;
+    #logoutBtn {
+      background: #ef4444;
       border: none;
-      padding: 0.7rem 1.5rem;
-      border-radius: 8px;
-      font-weight: bold;
+      color: white;
+      padding: 0.5rem 1rem;
       cursor: pointer;
-      color: #0f172a;
-      box-shadow: 0 2px 6px #00ffc880;
+      border-radius: 4px;
+      margin-left: 1rem;
+    }
+    #iframeContainer {
+      margin: 2rem;
+      height: 80vh;
+      width: 90vw;
+      border: 2px solid #334155;
+      border-radius: 8px;
     }
     iframe {
-      border: none;
       width: 100%;
-      height: 700px;
-      max-width: 900px;
-      margin: auto;
-      display: block;
-      border-radius: 10px;
-      box-shadow: 0 0 15px #00ffc8aa;
+      height: 100%;
+      border: none;
+      border-radius: 8px;
+    }
+    #loading {
+      margin: 2rem;
+      font-size: 1.2rem;
+      color: #a1a1aa;
     }
   </style>
 </head>
 <body>
+  <div id="login">
+    <button id="loginBtn">Entrar com Google</button>
+  </div>
 
-  <h1>🎓 Meu Diário com Google Sheets</h1>
-  <div id="login"></div>
+  <div id="userArea" style="display:none;">
+    <span id="userName"></span>
+    <button id="logoutBtn">Sair</button>
+  </div>
 
-  <div id="sheetContainer" style="display:none;">
-    <h2>Sua Planilha Pessoal</h2>
+  <div id="loading" style="display:none;">Carregando planilha...</div>
+
+  <div id="iframeContainer" style="display:none;">
     <iframe id="sheetFrame" src=""></iframe>
   </div>
 
   <script>
+    // Seu Firebase config:
     const firebaseConfig = {
       apiKey: "AIzaSyAR-WZNMiiF5c1u9UoObTGrs_iP5xnw5EU",
       authDomain: "arquivo-interdisciplinar.firebaseapp.com",
@@ -65,31 +77,67 @@
       measurementId: "G-NES70LQ2RX"
     };
 
+    // Inicializa Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
     const loginDiv = document.getElementById('login');
-    const sheetContainer = document.getElementById('sheetContainer');
+    const userArea = document.getElementById('userArea');
+    const userNameSpan = document.getElementById('userName');
+    const iframeContainer = document.getElementById('iframeContainer');
     const sheetFrame = document.getElementById('sheetFrame');
+    const loadingText = document.getElementById('loading');
+
+    loginBtn.addEventListener('click', () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider);
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      auth.signOut();
+    });
 
     auth.onAuthStateChanged(async user => {
       if (user) {
-        loginDiv.innerHTML = `Olá, ${user.displayName} <button onclick="auth.signOut()">Sair</button>`;
-        // Pega ID da planilha do Firestore
-        const doc = await db.collection('users').doc(user.uid).get();
-        if (doc.exists && doc.data().sheetId) {
-          const sheetId = doc.data().sheetId;
-          // URL pública para embedar o sheet
-          sheetFrame.src = `https://docs.google.com/spreadsheets/d/${sheetId}/edit?usp=sharing&rm=embedded`;
-          sheetContainer.style.display = 'block';
-        } else {
-          sheetContainer.innerHTML = '<p>Você ainda não tem uma planilha configurada.</p>';
-          sheetContainer.style.display = 'block';
+        loginDiv.style.display = 'none';
+        userArea.style.display = 'block';
+        userNameSpan.textContent = `Olá, ${user.displayName}`;
+
+        loadingText.style.display = 'block';
+        iframeContainer.style.display = 'none';
+
+        try {
+          // Troque essa URL pela sua URL real da API no Vercel!
+          const response = await fetch('https://a-b-i.vercel.app/api/create-sheet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid: user.uid, email: user.email })
+          });
+
+          const data = await response.json();
+
+          if (data.sheetId) {
+            sheetFrame.src = `https://docs.google.com/spreadsheets/d/${data.sheetId}/edit?usp=sharing&rm=embedded`;
+            iframeContainer.style.display = 'block';
+          } else {
+            alert('Erro ao carregar planilha');
+          }
+        } catch (err) {
+          alert('Erro ao conectar com a API');
+          console.error(err);
+        } finally {
+          loadingText.style.display = 'none';
         }
+
       } else {
-        loginDiv.innerHTML = `<button onclick="auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())">Entrar com Google</button>`;
-        sheetContainer.style.display = 'none';
+        loginDiv.style.display = 'block';
+        userArea.style.display = 'none';
+        iframeContainer.style.display = 'none';
+        loadingText.style.display = 'none';
+        sheetFrame.src = '';
       }
     });
   </script>
